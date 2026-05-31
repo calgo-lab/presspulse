@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: dlf-presseschau-scraper
+  namespace: s92548
+spec:
+  schedule: "30 11 * * 1-5"   
+  timeZone: "Europe/Berlin"   
+  concurrencyPolicy: Forbid   
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          imagePullSecrets:     
+            - name: private-registry-auth
+          restartPolicy: OnFailure
+          containers:
+            - name: scraper
+              image: registry.datexis.com/s92548/presseschau-scraper
+              imagePullPolicy: Always
+              args: ["python", "scheduler.py", "--output-dir", "/volume/output/data"]
+              env:
+                - name: GITHUB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-secret
+                      key: token
+                - name: GITHUB_REPO
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-secret
+                      key: repo
+              volumeMounts:
+                - mountPath: /volume/output 
+                  name: presseschau-storage
+              resources:
+                requests:
+                  cpu: "2"
+                  memory: "4Gi"
+                limits:
+                  cpu: "4"
+                  memory: "8Gi"
+          volumes:
+            - name: presseschau-storage
+              persistentVolumeClaim:
+                claimName: my-pvc

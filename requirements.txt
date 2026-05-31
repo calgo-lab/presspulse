@@ -1,0 +1,7 @@
+requests
+beautifulsoup4
+lxml
+transformers
+datasets
+pandas
+accelerate>=1.1.0
