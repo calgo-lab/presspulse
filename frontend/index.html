@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tägliche Medien-Analyse</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+    <style>
+        .score-bar { margin-bottom: 0.5rem; }
+        .article-text { white-space: pre-line; }
+    </style>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <div class="block">
+                <h1 class="title is-2">📰 Presspulse</h1>
+                <p class="subtitle is-5">Automatisches Laden der täglichen Zeitungs-Labels</p>
+            </div>
+
+            <div class="box">
+                <div class="field is-horizontal">
+                    <div class="field-label is-normal">
+                        <label class="label">Datum analysieren:</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field">
+                            <p class="control">
+                                <input class="input" type="date" id="date-picker" style="max-width: 200px;">
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div id="status-message"></div>
+
+            <div id="articles-container"></div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const datePicker = document.getElementById('date-picker');
+            const container = document.getElementById('articles-container');
+            const statusMessage = document.getElementById('status-message');
+
+            const heute = new Date();
+            const jahr = heute.getFullYear();
+            const monat = String(heute.getMonth() + 1).padStart(2, '0');
+            const tag = String(heute.getDate()).padStart(2, '0');
+            const heuteString = `${jahr}-${monat}-${tag}`;
+            
+            datePicker.value = heuteString;
+
+            loadDataForDate(heuteString);
+
+            datePicker.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    loadDataForDate(e.target.value);
+                }
+            });
+
+            async function loadDataForDate(dateString) {
+                container.innerHTML = '';
+                statusMessage.innerHTML = `<div class="notification is-info is-light">Lade und entpacke Daten für den ${dateString}...</div>`;
+                
+                const [year, month, day] = dateString.split('-');
+                const url = `data/${year}/${month}/${day}.gz`; 
+
+                try {
+                    const response = await fetch(url);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Für den ${dateString} wurden noch keine Daten hochgeladen (Code 404).`);
+                    }
+
+                    const arrayBuffer = await response.arrayBuffer();
+                    
+                    const decompressed = pako.ungzip(new Uint8Array(arrayBuffer), { to: 'string' });
+                    
+                    const data = JSON.parse(decompressed);
+
+                    statusMessage.innerHTML = '';
+                    renderArticles(data);
+
+                } catch (error) {
+                    statusMessage.innerHTML = `
+                        <div class="notification is-warning is-light">
+                            <strong>Hinweis:</strong> ${error.message}
+                        </div>`;
+                }
+            }
+
+            function renderArticles(data) {
+                const articlesArray = Array.isArray(data) ? data : [data];
+
+                if (articlesArray.length === 0) {
+                    container.innerHTML = '<p class="has-text-centered has-text-grey">Keine Artikel in der Datei gefunden.</p>';
+                    return;
+                }
+
+                articlesArray.forEach(art => {
+                    const articleBox = document.createElement('div');
+                    articleBox.className = 'box';
+
+                    const saubererText = decodeURIComponent(escape(art.text || '')) 
+                        || art.text.replace(/\\"/g, '"');
+
+                    articleBox.innerHTML = `
+                        <div class="content">
+                            <h3 class="title is-4">
+                                <a href="${art.url}" target="_blank" class="has-text-link">
+                                    🌐 ${new URL(art.url).hostname.replace('www.', '')}
+                                </a>
+                            </h3>
+                            <p class="subtitle is-6 has-text-grey">Veröffentlicht am: ${art.datum}</p>
+                            
+                            <p class="article-text is-size-5 mb-4">"${saubererText}"</p>
+                            
+                            <div class="block">
+                                <span class="tag is-dark is-medium">Haupt-Label: ${art.label} (${art.score}%)</span>
+                            </div>
+
+                            <details class="mt-4">
+                                <summary class="is-clickable has-text-link font-weight-bold">
+                                    📊 Alle gemessenen Themen-Scores anzeigen
+                                </summary>
+                                <div class="box is-shadowless mt-2" style="background-color: #fafafa; border-left: 4px solid #00d1b2;">
+                                    ${renderAllScores(art.all_scores)}
+                                </div>
+                            </details>
+                        </div>
+                    `;
+                    container.appendChild(articleBox);
+                });
+            }
+
+            function renderAllScores(scores) {
+                if (!scores) return '<p>Keine Detail-Scores vorhanden.</p>';
+                
+                return Object.entries(scores)
+                    .filter(([_, value]) => value > 1)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([category, value]) => `
+                        <div class="score-bar">
+                            <div class="is-flex is-justify-content-between">
+                                <small><strong>${category}</strong></small>
+                                <small>${value}%</small>
+                            </div>
+                            <progress class="progress is-small is-primary" value="${value}" max="100">${value}%</progress>
+                        </div>
+                    `).join('');
+            }
+        });
+    </script>
+</body>
+</html>
