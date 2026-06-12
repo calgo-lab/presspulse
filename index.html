@@ -69,7 +69,7 @@
                 statusMessage.innerHTML = `<div class="notification is-info is-light">Lade und entpacke Daten für den ${dateString}...</div>`;
                 
                 const [year, month, day] = dateString.split('-');
-                const url = `data/${year}/${month}/${day}.gz`; 
+                const url = `data/${year}/${month}/${day}.json.gz`; 
 
                 try {
                     const response = await fetch(url);
