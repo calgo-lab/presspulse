@@ -107,8 +107,8 @@
                     const articleBox = document.createElement('div');
                     articleBox.className = 'box';
 
-                    const saubererText = decodeURIComponent(escape(art.text || '')) 
-                        || art.text.replace(/\\"/g, '"');
+                    // Sicheres Entfernen von escaped Anführungszeichen
+                    const saubererText = art.text ? art.text.replace(/\\"/g, '"') : '';
 
                     articleBox.innerHTML = `
                         <div class="content">
