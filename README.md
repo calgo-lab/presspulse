@@ -4,9 +4,11 @@
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
 [![Transformers](https://img.shields.io/badge/%F0%9F%A4%97-Transformers-orange.svg?style=flat)](https://huggingface.co/docs/transformers/index)
 
-Dieses Repository enthält die Kern-Pipeline für das universitäre SHK-Projekt `fipitest`. Das System automatisiert das **Web-Scraping**, die **strukturelle Vorverarbeitung (Parsing)**, die **NLP-Klassifizierung (Machine Learning)** sowie die **Verteilung** der täglichen *Internationalen Presseschau* des Deutschlandfunks (DLF).
+Dieses Repository enthält die Kern-Pipeline für das universitäre SHK-Projekt `presspulse`. Das System automatisiert das **Web-Scraping**, die **strukturelle Vorverarbeitung (Parsing)**, die **NLP-Klassifizierung (Machine Learning)** sowie die **Verteilung** der täglichen *Internationalen Presseschau* des Deutschlandfunks (DLF).
 
 Ziel der Pipeline ist es, die unstrukturierten Medienanalysen des DLF in semantisch angereicherte, maschinenlesbare Zeitreihendaten zu transformieren und diese über eine automatisierte GitHub-Synchronisation für nachgelagerte Anwendungen (z. B. Web-Frontends) bereitzustellen.
+
+Die Demo Webseite finden sie [hier](https://calgo-lab.de/presspulse/)
 
 ---
 
